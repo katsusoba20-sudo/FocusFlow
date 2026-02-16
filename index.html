@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Libraries -->
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar neu-flat">
+            <div class="logo">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>FocusFlow</span>
+                <div id="user-display" style="font-size: 0.7rem; color: var(--text-light); margin-top: 5px;">Guest</div>
+            </div>
+
+            <ul class="nav-links">
+                <li class="active" data-target="timer-view">
+                    <a href="#" class="neu-btn-icon"><i class="fa-solid fa-clock"></i></a>
+                    <span class="tooltip">Timer</span>
+                </li>
+                <li data-target="task-view">
+                    <a href="#" class="neu-btn-icon"><i class="fa-solid fa-list-check"></i></a>
+                    <span class="tooltip">Tasks</span>
+                </li>
+                <li data-target="analytics-view">
+                    <a href="#" class="neu-btn-icon"><i class="fa-solid fa-chart-pie"></i></a>
+                    <span class="tooltip">Analytics</span>
+                </li>
+                <li data-target="settings-view">
+                    <a href="#" class="neu-btn-icon"><i class="fa-solid fa-gear"></i></a>
+                    <span class="tooltip">Settings</span>
+                </li>
+            </ul>
+            <button id="theme-toggle" class="neu-btn-icon" style="margin-top: auto; margin-bottom: 20px;">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-bar">
+                <h1 id="page-title">Timer</h1>
+            </header>
+
+            <!-- Views Container -->
+            <div id="views-container">
+                <!-- Timer View -->
+                <section id="timer-view" class="view active-view">
+                    <div class="timer-container neu-flat">
+                        <div id="greeting-message"
+                            style="margin-bottom: 20px; font-size: 1.1rem; color: var(--accent-color); font-weight: 500; min-height: 1.5em;">
+                        </div>
+                        <div class="timer-display neu-pressed-circle">
+                            <div class="timer-progress-container">
+                                <svg class="timer-svg" viewBox="0 0 300 300">
+                                    <circle class="timer-circle" cx="150" cy="150" r="140"></circle>
+                                </svg>
+                            </div>
+                            <span id="time-display" style="z-index: 1;">25:00</span>
+                            <span id="timer-status" style="z-index: 1;">Focus</span>
+                        </div>
+                        <div class="timer-controls">
+                            <button id="btn-start" class="neu-btn-lg"><i class="fa-solid fa-play"></i> Start</button>
+                            <button id="btn-pause" class="neu-btn-lg hidden"><i class="fa-solid fa-pause"></i>
+                                Pause</button>
+                            <button id="btn-reset" class="neu-btn-icon"><i
+                                    class="fa-solid fa-rotate-right"></i></button>
+                            <button id="btn-pip" class="neu-btn-icon" style="margin-left: 10px;"><i
+                                    class="fa-solid fa-clone"></i></button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Task View (Placeholder) -->
+                <section id="task-view" class="view hidden">
+                    <div class="task-board">
+                        <div class="task-column neu-flat">
+                            <h3>Todo</h3>
+                            <div class="task-list" id="todo-list"></div>
+                            <button class="neu-btn-block add-task-btn">+ Add Task</button>
+                        </div>
+                        <div class="task-column neu-flat">
+                            <h3>Doing</h3>
+                            <div class="task-list" id="doing-list"></div>
+                        </div>
+                        <div class="task-column neu-flat">
+                            <h3>Done</h3>
+                            <div class="task-list" id="done-list"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Analytics View (Placeholder) -->
+                <section id="analytics-view" class="view hidden">
+                    <div class="charts-grid">
+                        <div class="chart-card neu-flat">
+                            <h3>Focus Score</h3>
+                            <div style="height: 250px; position: relative;">
+                                <canvas id="focus-score-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card neu-flat">
+                            <h3>Project Distribution</h3>
+                            <div style="height: 250px; position: relative;">
+                                <canvas id="project-dist-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings View -->
+                <section id="settings-view" class="view hidden">
+                    <div class="settings-card neu-flat">
+                        <h3>Profile & App Settings</h3>
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="setting-username" class="neu-input" placeholder="Your Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Language</label>
+                            <select id="setting-language" class="neu-input">
+                                <option value="ja">日本語</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+
+                        <h3 style="margin-top: 20px;">Timer Settings (Minutes)</h3>
+                        <form id="settings-form">
+                            <div class="form-group">
+                                <label for="setting-focus">Focus Time</label>
+                                <input type="number" id="setting-focus" class="neu-input" min="1" max="60" value="25">
+                            </div>
+                            <div class="form-group">
+                                <label for="setting-short">Short Break</label>
+                                <input type="number" id="setting-short" class="neu-input" min="1" max="30" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label for="setting-long">Long Break</label>
+                                <input type="number" id="setting-long" class="neu-input" min="1" max="60" value="15">
+                            </div>
+                            <button type="submit" class="neu-btn-lg" style="margin-top: 20px;">Save Settings</button>
+                        </form>
+
+                        <h3 style="margin-top: 30px;">Data Management</h3>
+                        <button id="btn-export-csv" class="neu-btn-block"><i class="fa-solid fa-file-csv"></i> Export
+                            CSV</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Right Panel (Info/White Noise) -->
+        <aside class="right-panel neu-flat">
+            <div class="current-task-info">
+                <h3>Current Task</h3>
+                <div class="task-card-mini neu-pressed">
+                    <p class="no-task">No active task</p>
+                </div>
+            </div>
+
+            <div class="white-noise-controls">
+                <h3>Sound</h3>
+                <div class="sound-buttons">
+                    <button class="neu-btn-icon" data-sound="rain"><i class="fa-solid fa-cloud-rain"></i></button>
+                    <button class="neu-btn-icon" data-sound="cafe"><i class="fa-solid fa-mug-hot"></i></button>
+                    <button class="neu-btn-icon" data-sound="fire"><i class="fa-solid fa-fire"></i></button>
+                    <button class="neu-btn-icon" data-sound="bird"><i class="fa-solid fa-dove"></i></button>
+                    <button class="neu-btn-icon" data-sound="water"><i class="fa-solid fa-water"></i></button>
+                    <button class="neu-btn-icon" data-sound="forest"><i class="fa-solid fa-tree"></i></button>
+                </div>
+                <div class="volume-control">
+                    <input type="range" class="neu-range" min="0" max="100" value="50">
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="hidden">
+        <div class="modal neu-flat" id="task-modal">
+            <h3 class="modal-title">New Task</h3>
+            <form id="task-form">
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="task-title" class="neu-input" placeholder="What start working on?" required>
+                </div>
+                <div class="form-group">
+                    <label>Estimated Pomodoros</label>
+                    <div class="range-container">
+                        <input type="range" id="task-pomo-est" class="neu-range" min="1" max="10" value="1">
+                        <span id="pomo-est-value">1</span> <i class="fa-solid fa-stopwatch"></i>
+                    </div>
+                </div>
+                <!-- Project selection could be added here later -->
+
+                <div class="modal-actions">
+                    <button type="button" class="neu-btn-icon" id="btn-cancel-task"><i
+                            class="fa-solid fa-xmark"></i></button>
+                    <button type="submit" class="neu-btn-lg"><i class="fa-solid fa-check"></i> Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
